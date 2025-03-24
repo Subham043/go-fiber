@@ -1,0 +1,56 @@
+networks:
+  go_network:
+    driver: bridge
+
+
+services:
+
+  go_mysql:
+    image: mariadb:10.5.8
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    env_file:
+      - .env
+    environment:
+      - MYSQL_HOST=${DB_HOST}
+      - MYSQL_PORT=${DB_PORT}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+    networks:
+      - go_network
+
+  phpmyadmin:
+    depends_on:
+      - go_mysql
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - '8086:80'
+    env_file:
+      - .env
+    environment:
+      - PMA_HOST=${DB_HOST}
+      - PHP_ENABLE_XDEBUG=0
+      - UPLOAD_LIMIT=300M
+    networks:
+      - go_network
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - go_network
